@@ -146,8 +146,8 @@ if __name__ == "__main__":
     system.make_linked_vesicles()
 
 
-    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
-    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
+    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_lj"
+    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_lg"
 
     if not os.path.exists(folderPattern):
         os.makedirs(folderPattern)
