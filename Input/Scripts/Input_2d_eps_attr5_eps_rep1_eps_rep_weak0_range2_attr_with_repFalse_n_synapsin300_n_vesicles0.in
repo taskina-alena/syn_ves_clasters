@@ -1,0 +1,57 @@
+units lj
+dimension 2
+atom_style full
+boundary p p p
+read_data Input/Configuration/Config_2d_eps_attr5_eps_rep1_eps_rep_weak0_range2_attr_with_repFalse_n_synapsin300_n_vesicles0.dat 
+neighbor               0.3 bin
+neigh_modify           every 1 delay 1
+
+    ##======================================##
+    ## Interactions
+    ##======================================##
+    
+pair_style cosine/squared 3 
+pair_coeff 2 2 1 0.5612310241546865 0.5612310241546865 wca 
+pair_coeff 1 2 5 0.5612310241546865
+pair_coeff 1 1 1 0.5612310241546865 0.5612310241546865 wca 
+
+    ##======================================##
+    ## Setting up groups
+    ##======================================##
+    
+
+    ##======================================##
+    ## Computes
+    ##======================================##
+    
+
+    ##======================================##
+    ## Fixes
+    ##======================================##
+    
+velocity all create 1.0 1
+log Results_eps_attr5_eps_rep1_eps_rep_weak0_range2_attr_with_repFalse_n_synapsin300_n_vesicles0/Log_2d_eps_attr5_eps_rep1_eps_rep_weak0_range2_attr_with_repFalse_n_synapsin300_n_vesicles0.dat
+fix fLANG all langevin 1.0 1.0 1.0 100
+fix NVE all nve 1.0 1.0 1.0
+
+    ##======================================##
+    ## Output
+    ##======================================##
+    
+thermo 1000
+thermo_style custom step temp press etotal epair
+thermo_modify flush yes
+timestep 0.01
+
+    ##======================================##
+    ## Equilibration before output
+    ##======================================##
+    
+
+    ##======================================##
+    ## Run with output
+    ##======================================##
+    
+fix enforce_2d all enforce2d
+dump 2 all custom 1000 Results_eps_attr5_eps_rep1_eps_rep_weak0_range2_attr_with_repFalse_n_synapsin300_n_vesicles0/Movie_2d_eps_attr5_eps_rep1_eps_rep_weak0_range2_attr_with_repFalse_n_synapsin300_n_vesicles0.xyz id type mol x y z 
+run 1000000

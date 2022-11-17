@@ -17,6 +17,8 @@ class make_linked_vesicles(object):
         self.linker_sigma = sigma["linker"]  # size of synapsin
         self.synapsin_sigma = sigma["synapsin"]
 
+        self.types =  {'vesicle' : False, 'linker' : False, 'synapsin' : False}
+
         self.side = side
         self.lattice_constant = 2.5*self.vesicle_sigma
         self.Lx = self.side*self.lattice_constant
@@ -65,16 +67,13 @@ class make_linked_vesicles(object):
         lattice_inds = np.arange(self.lattice_sites.shape[0])
 
         # choose randomly point at the lattice (its number)
-        self.start_inds_vesicles = np.random.choice(lattice_inds, size = self.num_vesicles, replace = False)
-
+        self.start_inds = {}
+        self.start_inds['vesicle'] = np.random.choice(lattice_inds, size = self.num_vesicles, replace = False)
         # which lattice inds remained free
-        self.lattice_inds_remain = np.array( [item for item in lattice_inds if item not in set(list(self.start_inds_vesicles))] )
-
-        self.start_inds_synapsin = np.random.choice( self.lattice_inds_remain, size = self.num_synapsin, replace = False )
-
-        self.lattice_inds_remain = np.array([item for item in lattice_inds if item not in set(list(self.start_inds_vesicles) +  list(self.start_inds_synapsin))])
-
-        self.start_inds_linker = np.random.choice(self.lattice_inds_remain, size=self.num_linkers, replace=False)
+        self.lattice_inds_remain = np.array( [item for item in lattice_inds if item not in set(list(self.start_inds['vesicle']))] )
+        self.start_inds['synapsin'] = np.random.choice( self.lattice_inds_remain, size = self.num_synapsin, replace = False )
+        self.lattice_inds_remain = np.array([item for item in lattice_inds if item not in set(list(self.start_inds['vesicle']) +  list(self.start_inds['synapsin']))])
+        self.start_inds['linker'] = np.random.choice(self.lattice_inds_remain, size=self.num_linkers, replace=False)
 
         # plt.scatter( self.lattice_sites[self.start_inds_l1][:, 0 ], 1+self.lattice_sites[self.start_inds_l1][:, 1 ])
         # plt.scatter( self.lattice_sites[self.start_inds_l2][:, 0 ], self.lattice_sites[self.start_inds_l2][:, 1 ], c ='g')
@@ -83,24 +82,39 @@ class make_linked_vesicles(object):
         #
         # import sys
         # sys.exit()
-        test_list = list(self.start_inds_vesicles) + list(self.start_inds_synapsin) + list(self.start_inds_linker)
+        test_list = list(self.start_inds['vesicle']) + list(self.start_inds['synapsin']) + list(self.start_inds['linker'])
         assert len(test_list) == self.num_vesicles + self.num_linkers + self.num_synapsin
+
+    def make_single_particle(self, p_type):
+        if self.types[p_type]:
+            pass
+        else:
+            self.numTypes += 1
+            self.types[p_type] = self.numTypes
+            self.type_mass_list.append([self.numTypes, 1])
+
+        for i in range(len(self.start_inds[p_type])):  ## go through chains
+            indBuf = self.start_inds[p_type][i]
+            self.k += 1 # counter of molecules
+            self.numAll += 1 # counter of particles
+            x = self.lattice_sites[indBuf, 0]
+            y = self.lattice_sites[indBuf, 1]
+            z = self.lattice_sites[indBuf, 2]
+
+            self.coords.append("\t " + str(self.numAll) + " " + str(self.k) + " " + str(self.types[p_type]) + " 0 " + str(x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
 
     def make_linked_vesicles(self):
 
-        particles_list = [1,2]
-        particle_types = len(particles_list)
-        self.numTypes += len(np.unique(particles_list))
+        for t in ['vesicle', 'linker']:
+            if self.types[t]:
+                pass
+            else:
+                self.numTypes += 1
+                self.types[t] = self.numTypes
+                self.type_mass_list.append([self.numTypes, 1])
 
-        # for i in range(particle_types):
-        #     to_add = [particles_list[i], 1]
-        #     if to_add not in self.type_mass_list:
-        #         self.type_mass_list.append(to_add)
-        self.type_mass_list.append([1,1])
-        self.type_mass_list.append([2,1])
-
-        for i in range(len(self.start_inds_vesicles)):  ## go through chains
-            indBuf = self.start_inds_vesicles[i] # index of lattice occupied by vesicle
+        for i in range(len(self.start_inds['vesicle'])):  ## go through chains
+            indBuf = self.start_inds['vesicle'][i] # index of lattice occupied by vesicle
 
             ## counter of vesicles
             self.k += 1
@@ -122,16 +136,16 @@ class make_linked_vesicles(object):
                 ## place vesicle
                 if n == 0:
                     self.coords.append(
-                        "\t " + str(self.numAll) + " " + str(self.k) + " " + str(particles_list[0]) + " 0 " +
+                        "\t " + str(self.numAll) + " " + str(self.k) + " " + str(self.types['vesicle']) + " 0 " +
                         str(x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
                     bonded_num = self.numAll
 
-                radial_dist = 0.5 * self.lj_factor * self.vesicle_sigma
+                radial_dist = (self.vesicle_sigma + self.linker_sigma)
                 position_on_cirlce = np.array([[radial_dist,0], [0,-radial_dist], [-radial_dist,0], [0,radial_dist]])
 
                 if n > 0:
                     self.coords.append(
-                        "\t " + str(self.numAll) + " " + str(self.k) + " " +  str(particles_list[1]) + " 0 " +
+                        "\t " + str(self.numAll) + " " + str(self.k) + " " +  str(self.types['linker']) + " 0 " +
                         str(x - position_on_cirlce[n-1,0]) + " " + str(y - position_on_cirlce[n-1,1]) + " " + str(z) + " 0 0 0 \n")
 
                     #self.bondId += 1
@@ -143,53 +157,4 @@ class make_linked_vesicles(object):
                     #     self.numAll - 2) + " " + str(self.numAll) + "\n")
                     # self.numAngles += 1
 
-    def make_synapsin(self):
 
-        particles_list = [3]  ## first one is central body
-        particle_types = len(particles_list)
-        self.numTypes += particle_types
-        self.type_mass_list.append([3, 1])
-
-        for i in range(len(self.start_inds_synapsin)):  ## go through chains
-            indBuf = self.start_inds_synapsin[i]
-            self.k += 1 # counter of molecules
-            self.numAll += 1 # counter of particles
-            x = self.lattice_sites[indBuf, 0]
-            y = self.lattice_sites[indBuf, 1]
-            z = self.lattice_sites[indBuf, 2]
-
-            self.coords.append("\t " + str(self.numAll) + " " + str(self.k) + " " + '3' + " 0 " + str(x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
-
-    def make_vesicles(self):
-
-        particles_list = [1]  ## first one is central body
-        particle_types = len(particles_list)
-        self.numTypes += particle_types
-        self.type_mass_list.append([1, 1])
-
-        for i in range(len(self.start_inds_vesicles)):  ## go through chains
-            indBuf = self.start_inds_vesicles[i]
-            self.k += 1  # counter of molecules
-            self.numAll += 1  # counter of particles
-            x = self.lattice_sites[indBuf, 0]
-            y = self.lattice_sites[indBuf, 1]
-            z = self.lattice_sites[indBuf, 2]
-
-            self.coords.append("\t " + str(self.numAll) + " " + str(self.k) + " " + '1' + " 0 " + str(x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
-
-    def make_linkers(self):
-
-        particles_list = [2]  ## first one is central body
-        particle_types = len(particles_list)
-        self.numTypes += particle_types
-        self.type_mass_list.append([2, 1])
-
-        for i in range(len(self.start_inds_linker)):  ## go through chains
-            indBuf = self.start_inds_linker[i]
-            self.k += 1  # counter of molecules
-            self.numAll += 1  # counter of particles
-            x = self.lattice_sites[indBuf, 0]
-            y = self.lattice_sites[indBuf, 1]
-            z = self.lattice_sites[indBuf, 2]
-
-            self.coords.append("\t " + str(self.numAll) + " " + str(self.k) + " " + '2' + " 0 " + str(x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
