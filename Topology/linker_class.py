@@ -140,7 +140,11 @@ class make_linked_vesicles(object):
                         str(x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
                     bonded_num = self.numAll
 
+<<<<<<< HEAD
                 radial_dist = (self.vesicle_sigma + self.linker_sigma)
+=======
+                radial_dist = self.vesicle_sigma + self.linker_sigma
+>>>>>>> test_linker_placement
                 position_on_cirlce = np.array([[radial_dist,0], [0,-radial_dist], [-radial_dist,0], [0,radial_dist]])
 
                 if n > 0:

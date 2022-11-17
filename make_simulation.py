@@ -15,7 +15,6 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
     global_cutoff = 3
 
     eps = {'attr' : eps_attr, 'rep' : eps_rep, 'rep_weak' : eps_rep_weak}
-    types = {'vesicle':1, 'linker':2, 'synapsin':3}
 
 
     f.write("units lj\n")
@@ -35,18 +34,18 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
 
     f.write(f"pair_style cosine/squared {global_cutoff} \n")
 
-    for i in types.keys():
-        for j in types.keys():
-            if types[i] <= types[j]:
-                if i=='linker' and j=='synapsin':
+    for i in system.types.keys():
+        for j in system.types.keys():
+            if (system.types[i] <= system.types[j]) and system.types[i] and system.types[j]:
+                if (i=='linker' and j=='synapsin') or (j=='linker' and i =='synapsin'):
                     if attr_with_rep:
-                        f.write(f"pair_coeff {types[i]} {types[j]} {eps['attr']} { lj_factor * (sigma[i] + sigma[j]) } { inter_range + lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
+                        f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} { lj_factor * (sigma[i] + sigma[j]) } { inter_range + lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
                     else:
-                        f.write(f"pair_coeff {types[i]} {types[j]} {eps['attr']} {lj_factor * (sigma[i] + sigma[j])}\n")  ## eps sigma
-                elif i == 'vesicle' and j == 'synapsin':
-                    f.write(f"pair_coeff {types[i]} {types[j]} {eps['rep_weak']} {lj_factor * (sigma[i] + sigma[j])} {lj_factor * (sigma[i] + sigma[j])} wca \n")  ## eps sigma cutoff
+                        f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} {lj_factor * (sigma[i] + sigma[j])}\n")  ## eps sigma
+                elif (i == 'vesicle' and j == 'synapsin') or (j == 'vesicle' and i == 'synapsin'):
+                    f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['rep_weak']} {lj_factor * (sigma[i] + sigma[j])} {lj_factor * (sigma[i] + sigma[j])} wca \n")  ## eps sigma cutoff
                 else:
-                    f.write(f"pair_coeff {types[i]} {types[j]} {eps['rep']} {lj_factor * (sigma[i] + sigma[j]) } { lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
+                    f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['rep']} {lj_factor * (sigma[i] + sigma[j]) } { lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
     # if cutoff=sigma, only repulsive interactions more or less (between all atoms)
 
     f.write(
@@ -56,8 +55,9 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
     ##======================================##
     \n''')
 
-    f.write("group \t linked_vesicle \t type \t 1:2 \n")
-    f.write("group \t synapsin \t type \t 3 \n")
+    if rigid_molecules:
+        f.write("group \t linked_vesicle \t type \t" + str(system.types['vesicle']) + ":" + str(system.types['linker']) + "\n")
+        f.write("group \t synapsin \t type \t" + str(system.types['synapsin']) + " \n")
 
     f.write(
     '''
@@ -83,6 +83,8 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
         f.write("neigh_modify exclude molecule/intra all\n")
         f.write("fix rigidNVE linked_vesicle rigid/nve molecule\n")
         f.write("fix NVE synapsin nve 1.0 1.0 1.0\n")
+    else:
+        f.write("fix NVE all nve 1.0 1.0 1.0\n")
 
     f.write(
     '''
@@ -124,26 +126,28 @@ if __name__ == "__main__":
     eq_steps = 1e3
     run_steps = 1e6
 
-    eps_attr = 5
+    eps_attr = 6
     eps_rep = 1
-    eps_rep_weak = 0
+    eps_rep_weak = 1
     inter_range = 2
     attr_with_rep = False
     seed = 100
     np.random.seed(seed)
 
-    num_synapsin = 600 #linker concentration
-    num_vesicles = 1 # protein concentration
-    num_linkers = 4 * num_vesicles # linkers concentration
-    side_box = 25
+    num_synapsin = 400 #linker concentration
+    num_vesicles = 40 # protein concentration
+    num_linkers = 160 # linkers concentration
+    side_box = 50
     sigma = {'vesicle': 5, 'linker': 0.25, 'synapsin': 0.25}
 
     system = make_linked_vesicles(num_synapsin, num_linkers, num_vesicles, side_box, sigma)
+    system.make_single_particle('synapsin')
+    #system.make_single_particle('linker')
     system.make_linked_vesicles()
-    system.make_synapsin()
 
-    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_v0"
-    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_v0"
+
+    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
+    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
 
     if not os.path.exists(folderPattern):
         os.makedirs(folderPattern)
@@ -171,9 +175,9 @@ if __name__ == "__main__":
     for item in system.coords:
         f.write(item)
 
-    if not rigid_molecules:
-        for item in system.bonds:
-            f.write(item)
+#   if not rigid_molecules:
+#        for item in system.bonds:
+#            f.write(item)
 
     f.close()
     write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern, filePattern, attr_with_rep, sigma)
