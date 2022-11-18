@@ -20,7 +20,7 @@ class make_linked_vesicles(object):
         self.types =  {'vesicle' : False, 'linker' : False, 'synapsin' : False}
 
         self.side = side
-        self.lattice_constant = 2.5*self.vesicle_sigma
+        self.lattice_constant = 2.5*self.synapsin_sigma
         self.Lx = self.side*self.lattice_constant
         self.Ly = self.side*self.lattice_constant
         self.Lz = 0.1
@@ -45,21 +45,21 @@ class make_linked_vesicles(object):
         self.type_mass_list =[]
 
         # return coordinates of lattice
-        def init_lattice_2d(lat_con):
-            num_x = int(self.Lx/lat_con)
-            num_y = int(self.Ly/lat_con)
+        self.num_x = int(self.Lx / self.lattice_constant)
+        self.num_y = int(self.Ly / self.lattice_constant)
 
-            lattice_out = np.zeros(shape=(num_x*num_y, 3))
+        def init_lattice_2d():
+            lattice_out = np.zeros(shape=(self.num_x * self.num_y, 3))
             counter = 0
-            for i in range(num_x):
-                for j in range(num_y):
-                    lattice_out[counter, 0] = lat_con * i - lat_con * num_x * 0.5
-                    lattice_out[counter, 1] = lat_con * j - lat_con * num_y * 0.5
+            for i in range(self.num_y):
+                for j in range(self.num_x):
+                    lattice_out[counter, 0] = self.lattice_constant * i - self.lattice_constant * self.num_x * 0.5
+                    lattice_out[counter, 1] = self.lattice_constant * j - self.lattice_constant * self.num_y * 0.5
                     lattice_out[counter, 2] = 0.0
                     counter += 1
             return lattice_out
 
-        self.lattice_sites = init_lattice_2d(self.lattice_constant)
+        self.lattice_sites = init_lattice_2d()
 
         assert self.num_synapsin + self.num_linkers + self.num_vesicles <= self.lattice_sites.shape[0], "ERROR: not enough lattice sites, increase box size."
 
@@ -68,23 +68,46 @@ class make_linked_vesicles(object):
 
         # choose randomly point at the lattice (its number)
         self.start_inds = {}
-        self.start_inds['vesicle'] = np.random.choice(lattice_inds, size = self.num_vesicles, replace = False)
+        lattice_mask = np.ones(len(lattice_inds), bool)
+
+        lattice_inds_vesicle = []
+        vesicle_size = (self.vesicle_sigma/self.lattice_constant + 2*self.linker_sigma/self.lattice_constant)
+        vesicle_step = 2.5*vesicle_size
+        num_x_vesicles = int((self.num_x - 1) // vesicle_step)
+        num_y_vesicles = int((self.num_y - 1) // vesicle_step)
+        assert(num_y_vesicles>0)
+        assert (num_x_vesicles > 0)
+        shift_x = ((self.num_x - 1) % vesicle_step) // 2 + 1
+        shift_y = ((self.num_y -1) % vesicle_step) // 2 + 1
+        for i in range(num_y_vesicles):
+            for j in range(num_x_vesicles):
+                lattice_inds_vesicle.append(int((shift_y + i * vesicle_step) * self.num_x + (shift_x + j * vesicle_step)))
+
+        assert(len(lattice_inds_vesicle) >= self.num_vesicles)
+
+        self.start_inds['vesicle'] = np.random.choice(lattice_inds_vesicle, size = self.num_vesicles, replace = False)
+        for ind in self.start_inds['vesicle']:
+            for i in range(int(-vesicle_size // 2) - 3, int(vesicle_size // 2) + 3):
+                for j in range(-int(vesicle_size // 2) - 3, int(vesicle_size // 2) + 3):
+                    ind_occupied = int(ind + i * self.num_x + j)
+                    lattice_mask[ind_occupied] = False
+
         # which lattice inds remained free
-        self.lattice_inds_remain = np.array( [item for item in lattice_inds if item not in set(list(self.start_inds['vesicle']))] )
-        self.start_inds['synapsin'] = np.random.choice( self.lattice_inds_remain, size = self.num_synapsin, replace = False )
-        self.lattice_inds_remain = np.array([item for item in lattice_inds if item not in set(list(self.start_inds['vesicle']) +  list(self.start_inds['synapsin']))])
-        self.start_inds['linker'] = np.random.choice(self.lattice_inds_remain, size=self.num_linkers, replace=False)
+        self.start_inds['synapsin'] = np.random.choice(lattice_inds[lattice_mask], size = self.num_synapsin, replace = False )
+        #lattice_mask *= ([i not in self.start_inds['synapsin'] for i in lattice_inds])
 
-        # plt.scatter( self.lattice_sites[self.start_inds_l1][:, 0 ], 1+self.lattice_sites[self.start_inds_l1][:, 1 ])
-        # plt.scatter( self.lattice_sites[self.start_inds_l2][:, 0 ], self.lattice_sites[self.start_inds_l2][:, 1 ], c ='g')
-        # plt.scatter( self.lattice_sites[self.start_inds_p][:, 0 ], -1+self.lattice_sites[self.start_inds_p][:, 1 ], c ='r')
-        # plt.show()
-        #
-        # import sys
-        # sys.exit()
-        test_list = list(self.start_inds['vesicle']) + list(self.start_inds['synapsin']) + list(self.start_inds['linker'])
-        assert len(test_list) == self.num_vesicles + self.num_linkers + self.num_synapsin
+        #self.start_inds['linker'] = np.random.choice(lattice_inds[lattice_mask], size=self.num_linkers, replace=False)
+        #lattice_mask *= ([i not in self.start_inds['linker'] for i in lattice_inds])
 
+        #plt.scatter(self.lattice_sites[self.start_inds['vesicle']][:, 0], 1+self.lattice_sites[self.start_inds['vesicle']][:, 1 ], s=5)
+        #plt.scatter(self.lattice_sites[inds_occupied][:, 0], 1 + self.lattice_sites[inds_occupied][:, 1], s=0.25)
+        #plt.scatter( self.lattice_sites[self.start_inds['synapsin']][:, 0 ], self.lattice_sites[self.start_inds['synapsin']][:, 1 ], c ='g', s=0.25)
+        #plt.scatter( self.lattice_sites[self.start_inds['linker']][:, 0 ], -1+self.lattice_sites[self.start_inds['linker']][:, 1 ], c ='r', s=0.25)
+        #plt.show()
+
+
+        #test_list = list(self.start_inds['vesicle']) + list(self.start_inds['synapsin']) + list(self.start_inds['linker'])
+        #assert len(test_list) == self.num_vesicles + self.num_linkers + self.num_synapsin
     def make_single_particle(self, p_type):
         if self.types[p_type]:
             pass

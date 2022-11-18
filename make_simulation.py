@@ -129,15 +129,15 @@ if __name__ == "__main__":
     eps_attr = 6
     eps_rep = 1
     eps_rep_weak = 1
-    inter_range = 2
+    inter_range = 0.25
     attr_with_rep = False
     seed = 100
     np.random.seed(seed)
 
-    num_synapsin = 400 #linker concentration
-    num_vesicles = 40 # protein concentration
-    num_linkers = 160 # linkers concentration
-    side_box = 50
+    num_synapsin = 5000 #linker concentration
+    num_vesicles = 500 # protein concentration
+    num_linkers = num_vesicles*4 # linkers concentration
+    side_box = 1000
     sigma = {'vesicle': 5, 'linker': 0.25, 'synapsin': 0.25}
 
     system = make_linked_vesicles(num_synapsin, num_linkers, num_vesicles, side_box, sigma)
@@ -146,8 +146,8 @@ if __name__ == "__main__":
     system.make_linked_vesicles()
 
 
-    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_lj"
-    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_lg"
+    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
+    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
 
     if not os.path.exists(folderPattern):
         os.makedirs(folderPattern)
