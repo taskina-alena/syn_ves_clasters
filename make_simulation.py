@@ -6,6 +6,8 @@ import numpy as np
 
 def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern, filePattern, attr_with_rep, sigma):
 
+    #TODO introduce different size of vesicles
+
     filename = f"Input/Scripts/Input_{filePattern}.in"
 
     f = open(filename, "w")
@@ -41,12 +43,35 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
                     if attr_with_rep:
                         f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} { lj_factor * (sigma[i] + sigma[j]) } { inter_range + lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
                     else:
-                        f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} {lj_factor * (sigma[i] + sigma[j])}\n")  ## eps sigma
+                        f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} {lj_factor * (sigma[i] + sigma[j])} { inter_range + lj_factor * (sigma[i] + sigma[j]) } \n")  ## eps sigma cutoff
                 elif (i == 'vesicle' and j == 'synapsin') or (j == 'vesicle' and i == 'synapsin'):
                     f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['rep_weak']} {lj_factor * (sigma[i] + sigma[j])} {lj_factor * (sigma[i] + sigma[j])} wca \n")  ## eps sigma cutoff
                 else:
                     f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['rep']} {lj_factor * (sigma[i] + sigma[j]) } { lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
     # if cutoff=sigma, only repulsive interactions more or less (between all atoms)
+
+    f.write(
+        '''
+        ##======================================##
+        ## Bonds
+        ##======================================##
+        \n''')
+
+    f.write("bond_style harmonic \n")
+    #TODO make energy big
+    f.write(f"bond_coeff  1 1 {sigma['vesicle'] + sigma['linker']}\n")
+
+    f.write(
+        '''
+        ##======================================##
+        ## Angles
+        ##======================================##
+        \n''')
+
+    f.write("angle_style harmonic \n")
+
+    #TODO check different energy
+    f.write(f"angle_coeff  1 1 90\n")
 
     f.write(
     '''
@@ -119,7 +144,7 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
 
 if __name__ == "__main__":
 
-    rigid_molecules = True
+    rigid_molecules = False
 
     sim_seed = 5
     dump_step = 1000
@@ -134,8 +159,8 @@ if __name__ == "__main__":
     seed = 100
     np.random.seed(seed)
 
-    num_synapsin = 5000 #linker concentration
-    num_vesicles = 500 # protein concentration
+    num_synapsin = 500 #linker concentration
+    num_vesicles = 50 # protein concentration
     num_linkers = num_vesicles*4 # linkers concentration
     side_box = 1000
     sigma = {'vesicle': 5, 'linker': 0.25, 'synapsin': 0.25}
@@ -155,9 +180,9 @@ if __name__ == "__main__":
     configName = "Input/Configuration/Config_%s.dat" % filePattern
 
     header = ["LAMMPS Description \n \n",
-              "\t " + str(system.numAll) + " atoms \n \t " + str(system.numBonds) +
-              " bonds \n \t " + str(system.numAngles) + " angles \n \t 0 dihedrals \n \t 0 impropers \n",
-              "\n \t "+str(system.numTypes)+" atom types \n \t 2 bond types \n \t 0 angle types \n \t 0 dihedral types \n \t 0 improper types \n",
+              "\t " + str(system.numAll) + " atoms \n \t " + str(system.numBonds) +" bonds \n \t " +
+              str(system.numAngles) + " angles \n \t 0 dihedrals \n \t 0 impropers \n",
+              "\n \t "+str(system.numTypes)+" atom types \n \t 1 bond types \n \t 1 angle types \n \t 0 dihedral types \n \t 0 improper types \n",
               "\n \t " + str(-system.Lx*0.5) + " " + str(system.Lx*0.5) + " xlo xhi\n \t", str(-system.Ly*0.5) + " " + str(system.Ly*0.5) + " ylo yhi \n \t",
               str(-system.Lz*0.5) + " " + str(system.Lz*0.5) + " zlo zhi\n"]
 
@@ -175,9 +200,11 @@ if __name__ == "__main__":
     for item in system.coords:
         f.write(item)
 
-#   if not rigid_molecules:
-#        for item in system.bonds:
-#            f.write(item)
+    for item in system.bonds:
+            f.write(item)
+
+    for item in system.angles:
+            f.write(item)
 
     f.close()
     write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern, filePattern, attr_with_rep, sigma)
