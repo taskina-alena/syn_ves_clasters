@@ -7,7 +7,9 @@ from mpl_toolkits.mplot3d import Axes3D
 class make_linked_vesicles(object):
 
 
-    def __init__(self, num_synapsin, num_linkers, num_vesicles, side, sigma):
+    def __init__(self, num_synapsin, num_linkers, num_vesicles, side, sigma, rigid):
+
+        self.rigid = rigid
 
         self.num_synapsin = num_synapsin
         self.num_linkers = num_linkers
@@ -170,18 +172,19 @@ class make_linked_vesicles(object):
                         str(x - position_on_cirlce[n-1,0]) + " " + str(y - position_on_cirlce[n-1,1]) + " " + str(z) + " 0 0 0 \n")
                     #particle_number molecular_number inner_mol_number charge x y z 0 0 0
 
-                    self.bondId += 1
-                    self.bonds.append("\t" + str(self.bondId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " \n")
-                    self.numBonds += 1
-                    #bond_number 1 particle_number particle_bonded_number
+                    if not self.rigid:
+                        self.bondId += 1
+                        self.bonds.append("\t" + str(self.bondId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " \n")
+                        self.numBonds += 1
+                        #bond_number 1 particle_number particle_bonded_number
 
 
-                    self.angleId += 1
-                    if n>1:
-                        self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll - 1) + "\n")
-                    else:
-                        self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll + 3) + "\n")
-                    self.numAngles += 1
-                    #angle_number 1 linker_1 vesicle linker_2
+                        self.angleId += 1
+                        if n>1:
+                            self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll - 1) + "\n")
+                        else:
+                            self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll + 3) + "\n")
+                        self.numAngles += 1
+                        #angle_number 1 linker_1 vesicle linker_2
 
 

@@ -56,10 +56,10 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
         ## Bonds
         ##======================================##
         \n''')
-
-    f.write("bond_style harmonic \n")
-    #TODO make energy big
-    f.write(f"bond_coeff  1 1 {sigma['vesicle'] + sigma['linker']}\n")
+    if not rigid_molecules:
+        f.write("bond_style harmonic \n")
+        #TODO make energy big
+        f.write(f"bond_coeff  1 1 {sigma['vesicle'] + sigma['linker']}\n")
 
     f.write(
         '''
@@ -67,11 +67,11 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
         ## Angles
         ##======================================##
         \n''')
+    if not rigid_molecules:
+        f.write("angle_style harmonic \n")
 
-    f.write("angle_style harmonic \n")
-
-    #TODO check different energy
-    f.write(f"angle_coeff  1 1 90\n")
+        #TODO check different energy
+        f.write(f"angle_coeff  1 1 90\n")
 
     f.write(
     '''
@@ -144,7 +144,7 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
 
 if __name__ == "__main__":
 
-    rigid_molecules = False
+    rigid_molecules = True
 
     sim_seed = 5
     dump_step = 1000
@@ -159,20 +159,20 @@ if __name__ == "__main__":
     seed = 100
     np.random.seed(seed)
 
-    num_synapsin = 4000
+    num_synapsin = 2000
     num_vesicles = 100
     num_linkers = num_vesicles*4
     side_box = 200
     sigma = {'vesicle': 4, 'linker': 0.45, 'synapsin': 0.45}
 
-    system = make_linked_vesicles(num_synapsin, num_linkers, num_vesicles, side_box, sigma)
+    system = make_linked_vesicles(num_synapsin, num_linkers, num_vesicles, side_box, sigma, rigid=rigid_molecules)
     system.make_single_particle('synapsin')
     #system.make_single_particle('linker')
     system.make_linked_vesicles()
 
 
-    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
-    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_eps_rep_weak{eps_rep_weak}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}"
+    filePattern = f"2d_eps_attr{eps_attr}_eps_rep{eps_rep}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_rigid_{rigid_molecules}"
+    folderPattern = f"Results_eps_attr{eps_attr}_eps_rep{eps_rep}_range{inter_range}_attr_with_rep{attr_with_rep}_n_synapsin{num_synapsin}_n_vesicles{num_vesicles}_rigid_{rigid_molecules}"
 
     if not os.path.exists(folderPattern):
         os.makedirs(folderPattern)
@@ -200,10 +200,10 @@ if __name__ == "__main__":
     for item in system.coords:
         f.write(item)
 
-    for item in system.bonds:
+    if not rigid_molecules:
+        for item in system.bonds:
             f.write(item)
-
-    for item in system.angles:
+        for item in system.angles:
             f.write(item)
 
     f.close()
