@@ -151,7 +151,7 @@ class make_linked_vesicles(object):
                 self.numAll += 1
                 '''
                 write info about particles
-                particle_number  molecular_number inner_mol_number charge x y z 0 0 0 ???
+                particle_number  molecular_number inner_mol_number charge x y z 0 0 0
                 '''
                 ## place vesicle
                 if n == 0:
@@ -168,14 +168,20 @@ class make_linked_vesicles(object):
                     self.coords.append(
                         "\t " + str(self.numAll) + " " + str(self.k) + " " +  str(self.types['linker']) + " 0 " +
                         str(x - position_on_cirlce[n-1,0]) + " " + str(y - position_on_cirlce[n-1,1]) + " " + str(z) + " 0 0 0 \n")
+                    #particle_number molecular_number inner_mol_number charge x y z 0 0 0
 
-                    #self.bondId += 1
-                    #self.bonds.append("\t" + str(self.bondId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " \n")
-                    #self.numBonds += 1
+                    self.bondId += 1
+                    self.bonds.append("\t" + str(self.bondId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " \n")
+                    self.numBonds += 1
+                    #bond_number 1 particle_number particle_bonded_number
 
-                    # self.angleId += 1
-                    # self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll - 1) + " " + str(
-                    #     self.numAll - 2) + " " + str(self.numAll) + "\n")
-                    # self.numAngles += 1
+
+                    self.angleId += 1
+                    if n>1:
+                        self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll - 1) + "\n")
+                    else:
+                        self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll + 3) + "\n")
+                    self.numAngles += 1
+                    #angle_number 1 linker_1 vesicle linker_2
 
 
