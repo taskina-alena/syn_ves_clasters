@@ -72,6 +72,7 @@ class make_linked_vesicles(object):
         self.start_inds = {}
         lattice_mask = np.ones(len(lattice_inds), bool)
 
+
         lattice_inds_vesicle = []
         vesicle_size = (self.vesicle_sigma/self.lattice_constant)
         vesicle_step = round(vesicle_size + 0.5) * 2
