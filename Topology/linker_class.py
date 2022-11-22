@@ -20,9 +20,9 @@ class make_linked_vesicles(object):
         self.types =  {'vesicle' : False, 'linker' : False, 'synapsin' : False}
 
         self.side = side
-        self.lattice_constant = 2.5*self.synapsin_sigma
-        self.Lx = self.side*self.lattice_constant
-        self.Ly = self.side*self.lattice_constant
+        self.lattice_constant = self.synapsin_sigma * 2.5
+        self.Lx = self.side
+        self.Ly = self.side
         self.Lz = 0.1
 
         self.lj_factor = 2**(1/6)
@@ -61,7 +61,7 @@ class make_linked_vesicles(object):
 
         self.lattice_sites = init_lattice_2d()
 
-        assert self.num_synapsin + self.num_linkers + self.num_vesicles <= self.lattice_sites.shape[0], "ERROR: not enough lattice sites, increase box size."
+        #assert self.num_synapsin + self.num_linkers + self.num_vesicles <= self.lattice_sites.shape[0], "ERROR: not enough lattice sites, increase box size."
 
         # numerate lattice coordinates
         lattice_inds = np.arange(self.lattice_sites.shape[0])
@@ -71,38 +71,35 @@ class make_linked_vesicles(object):
         lattice_mask = np.ones(len(lattice_inds), bool)
 
         lattice_inds_vesicle = []
-        vesicle_size = (self.vesicle_sigma/self.lattice_constant + 2*self.linker_sigma/self.lattice_constant)
-        vesicle_step = 2.5*vesicle_size
-        num_x_vesicles = int((self.num_x - 1) // vesicle_step)
-        num_y_vesicles = int((self.num_y - 1) // vesicle_step)
+        vesicle_size = (self.vesicle_sigma/self.lattice_constant)
+        vesicle_step = round(vesicle_size + 0.5) * 2
+        num_x_vesicles = self.num_x // vesicle_step
+        num_y_vesicles = self.num_y // vesicle_step
         assert(num_y_vesicles>0)
         assert (num_x_vesicles > 0)
-        shift_x = ((self.num_x - 1) % vesicle_step) // 2 + 1
-        shift_y = ((self.num_y -1) % vesicle_step) // 2 + 1
+        #shift_x = ((self.num_x - 1) % vesicle_step) // 2 + 1
+        #shift_y = ((self.num_y -1) % vesicle_step) // 2 + 1
         for i in range(num_y_vesicles):
             for j in range(num_x_vesicles):
-                lattice_inds_vesicle.append(int((shift_y + i * vesicle_step) * self.num_x + (shift_x + j * vesicle_step)))
+                lattice_inds_vesicle.append(int((vesicle_step/2 + i * vesicle_step) * self.num_x + (vesicle_step/2 + j * vesicle_step)))
 
         assert(len(lattice_inds_vesicle) >= self.num_vesicles)
 
         self.start_inds['vesicle'] = np.random.choice(lattice_inds_vesicle, size = self.num_vesicles, replace = False)
+
+
         for ind in self.start_inds['vesicle']:
-            for i in range(int(-vesicle_size // 2) - 3, int(vesicle_size // 2) + 3):
-                for j in range(-int(vesicle_size // 2) - 3, int(vesicle_size // 2) + 3):
+            for i in range(round(-vesicle_size-0.5), round(vesicle_size+0.5)):
+                for j in range(round(-vesicle_size-0.5), round(vesicle_size+0.5)):
                     ind_occupied = int(ind + i * self.num_x + j)
                     lattice_mask[ind_occupied] = False
-
         # which lattice inds remained free
+
         self.start_inds['synapsin'] = np.random.choice(lattice_inds[lattice_mask], size = self.num_synapsin, replace = False )
-        #lattice_mask *= ([i not in self.start_inds['synapsin'] for i in lattice_inds])
 
-        #self.start_inds['linker'] = np.random.choice(lattice_inds[lattice_mask], size=self.num_linkers, replace=False)
-        #lattice_mask *= ([i not in self.start_inds['linker'] for i in lattice_inds])
-
-        #plt.scatter(self.lattice_sites[self.start_inds['vesicle']][:, 0], 1+self.lattice_sites[self.start_inds['vesicle']][:, 1 ], s=5)
-        #plt.scatter(self.lattice_sites[inds_occupied][:, 0], 1 + self.lattice_sites[inds_occupied][:, 1], s=0.25)
-        #plt.scatter( self.lattice_sites[self.start_inds['synapsin']][:, 0 ], self.lattice_sites[self.start_inds['synapsin']][:, 1 ], c ='g', s=0.25)
-        #plt.scatter( self.lattice_sites[self.start_inds['linker']][:, 0 ], -1+self.lattice_sites[self.start_inds['linker']][:, 1 ], c ='r', s=0.25)
+        #plt.scatter(self.lattice_sites[self.start_inds['vesicle']][:, 0], 1+self.lattice_sites[self.start_inds['vesicle']][:, 1 ], s=40)
+        #plt.scatter( self.lattice_sites[self.start_inds['synapsin']][:, 0 ], self.lattice_sites[self.start_inds['synapsin']][:, 1 ], c ='g', s=5)
+        #plt.scatter( self.lattice_sites[self.start_inds['linker']][:, 0 ], -1+self.lattice_sites[self.start_inds['linker']][:, 1 ], c ='r', s=5)
         #plt.show()
 
 

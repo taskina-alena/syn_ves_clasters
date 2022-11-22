@@ -41,7 +41,7 @@ def write_in_script(eps_attr, eps_rep, eps_rep_weak, inter_range, folderPattern,
                     if attr_with_rep:
                         f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} { lj_factor * (sigma[i] + sigma[j]) } { inter_range + lj_factor * (sigma[i] + sigma[j]) } wca \n")  ## eps sigma cutoff
                     else:
-                        f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} {lj_factor * (sigma[i] + sigma[j])}\n")  ## eps sigma
+                        f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['attr']} {lj_factor * (sigma[i] + sigma[j])}  { inter_range + lj_factor * (sigma[i] + sigma[j])}\n")  ## eps sigma
                 elif (i == 'vesicle' and j == 'synapsin') or (j == 'vesicle' and i == 'synapsin'):
                     f.write(f"pair_coeff {system.types[i]} {system.types[j]} {eps['rep_weak']} {lj_factor * (sigma[i] + sigma[j])} {lj_factor * (sigma[i] + sigma[j])} wca \n")  ## eps sigma cutoff
                 else:
@@ -134,11 +134,11 @@ if __name__ == "__main__":
     seed = 100
     np.random.seed(seed)
 
-    num_synapsin = 5000 #linker concentration
-    num_vesicles = 500 # protein concentration
-    num_linkers = num_vesicles*4 # linkers concentration
-    side_box = 1000
-    sigma = {'vesicle': 5, 'linker': 0.25, 'synapsin': 0.25}
+    num_synapsin = 4000
+    num_vesicles = 100
+    num_linkers = num_vesicles*4
+    side_box = 200
+    sigma = {'vesicle': 4, 'linker': 0.5, 'synapsin': 0.5}
 
     system = make_linked_vesicles(num_synapsin, num_linkers, num_vesicles, side_box, sigma)
     system.make_single_particle('synapsin')
