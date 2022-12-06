@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 class make_linked_vesicles(object):
 
 
-    def __init__(self, num, eps, sigma, side, rigid, inter_range, attr_with_rep):
+    def __init__(self, num, eps, sigma, side, rigid, inter_range, attr_with_rep, newBonds):
 
         self.rigid = rigid
 
@@ -16,6 +16,7 @@ class make_linked_vesicles(object):
         self.sigma = sigma
         self.inter_range = inter_range
         self.attr_with_rep = attr_with_rep
+        self.newBonds = newBonds
 
         #shows whether this type is in the system or not (yet)
         self.types =  {'linker' : False, 'synapsin' : False}
@@ -42,10 +43,15 @@ class make_linked_vesicles(object):
 
         self.numBonds = 0
         self.bondId = 0
-        self.bondTypes = 0
+        self.bondTypes = {}
+        self.numBondTypes = 0
 
         self.numAngles = 0
         self.angleId = 0
+        if self.rigid:
+            self.numAngleTypes = 0
+        else:
+            self.numAngleTypes = 1
 
         self.numTypes = 0
         self.type_mass_list =[]
@@ -123,13 +129,16 @@ class make_linked_vesicles(object):
             for j in self.types.keys():
                 if (self.types[i] <= self.types[j]) and self.types[i] and self.types[j]:
 
-                    if (i == 'linker' and j == 'synapsin') or (j == 'linker' and i == 'synapsin'):
+
+                    if (self.newBonds and  (i == 'synapsin_b' and 'j == synapsin_b')) or\
+                            (not self.newBonds and ((i == 'linker' and j == 'synapsin') or (j == 'linker' and i == 'synapsin'))):
                         epsilon = self.eps['attr']
                         add_cutoff = self.inter_range
                         if self.attr_with_rep:
                                 potential = 'wca'
                         else:
                                 potential = ''
+
                     else:
                         epsilon = self.eps['rep']
                         add_cutoff = 0
@@ -137,11 +146,15 @@ class make_linked_vesicles(object):
 
                     if i[:7] == 'vesicle':
                         sigma1 = self.sigma['vesicle'][int(i[7]) - 1]
+                    elif i == 'synapsin_b':
+                        sigma1 = self.sigma['synapsin']
                     else:
                         sigma1 = self.sigma[i]
 
                     if j[:7] == 'vesicle':
                         sigma2 = self.sigma['vesicle'][int(j[7]) - 1]
+                    elif j == 'synapsin_b':
+                        sigma2 = self.sigma['synapsin']
                     else:
                         sigma2 = self.sigma[j]
 
@@ -175,9 +188,11 @@ class make_linked_vesicles(object):
 
         for sigma_index in range(len(self.sigma['vesicle'])):
 
-            self.bondTypes += 1
-            self.bond_coeff.append("\t bond_coeff " + str(self.bondTypes) + " " + str(self.eps['bond']) + " " + str(self.sigma['vesicle'][sigma_index] + self.sigma['linker']) + " \n")
-            # bond_type energy eq_distance
+            if not self.rigid:
+                self.numBondTypes += 1
+                self.bondTypes['vesicle' + str(sigma_index+1) + '-' + 'linker'] = self.numBondTypes
+                self.bond_coeff.append("\t bond_coeff " + str(self.numBondTypes) + " " + str(self.eps['bond']) + " " + str(self.sigma['vesicle'][sigma_index] + self.sigma['linker']) + " \n")
+                # bond_type energy eq_distance
 
             for i in range(len(self.start_inds['vesicle' + str(sigma_index+1)])):  ## go through chains
                 indBuf = self.start_inds['vesicle' + str(sigma_index+1)][i] # index of lattice occupied by vesicle
@@ -215,7 +230,7 @@ class make_linked_vesicles(object):
 
                         if not self.rigid:
                             self.bondId += 1
-                            self.bonds.append("\t" + str(self.bondId) + " " + str(self.bondTypes) + " " + str(self.numAll) + " " + str(bonded_num) + " \n")
+                            self.bonds.append("\t" + str(self.bondId) + " " + str(self.numBondTypes) + " " + str(self.numAll) + " " + str(bonded_num) + " \n")
                             self.numBonds += 1
                             #bond_number bond_type particle_number particle_bonded_number
 
@@ -226,5 +241,15 @@ class make_linked_vesicles(object):
                                 self.angles.append("\t " + str(self.angleId) + " 1 " + str(self.numAll) + " " + str(bonded_num) + " " + str(self.numAll + 3) + "\n")
                             self.numAngles += 1
                             #angle_number angle_type linker1 vesicle linker2
+
+
+
+        if self.newBonds:
+            self.numBondTypes += 1
+            self.bondTypes['linker-synapsin'] =self.numBondTypes
+            self.bond_coeff.append(f"\t bond_coeff {self.numBondTypes} {self.eps['bond']} {self.sigma['linker'] + self.sigma['synapsin']} \n")
+            self.numTypes += 1
+            self.types['synapsin_b'] = self.numTypes
+            self.type_mass_list.append([self.numTypes, 1])
 
 
