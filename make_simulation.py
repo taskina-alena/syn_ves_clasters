@@ -5,11 +5,8 @@ import input_func
 
 # TODO try attractive interactions between synapsin
 # TODO introduce clastering of synapsin before vesicles
+
 # TODO count the sizes of clusters
-# TODO make different numbers of linkers per vesicle
-# TODO create bonds
-# TODO introduce different fractions of vesiclesgit
-# TODO introduce different number of synapsin on vesicle
 
 if __name__ == "__main__":
 
@@ -33,16 +30,27 @@ if __name__ == "__main__":
     #side_box = 600
     #num = {'vesicle':900, 'synapsin':36000, 'linker':3600}
     sigma = {'vesicle': [3, 4, 5], 'linker': 0.5, 'synapsin': 0.5}
+    ves_fraction = {'vesicle_3':0.25, 'vesicle_4':0.5, 'vesicle_5':0.25}
+    syn_per_ves = {'vesicle_3': 3, 'vesicle_4': 4, 'vesicle_5': 5}
+    assert sum(ves_fraction.values())>=0.99
 
-    system = make_linked_vesicles(num, eps, sigma, side_box, rigid_molecules, inter_range, attr_with_rep, newBonds, linker, angles_interactions)
+    system = make_linked_vesicles(num, eps, sigma, side_box, rigid_molecules, inter_range, attr_with_rep, newBonds, linker, angles_interactions, ves_fraction, syn_per_ves)
     system.make_linked_vesicles()
 
     ves_sizes = ''
     for i in range(len(sigma['vesicle'])):
         ves_sizes+=str(sigma['vesicle'][i])
         ves_sizes+='_'
-    filePattern = f"without_linker_ves_sizes{ves_sizes}_eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_n_vesicles{num['vesicle']}"
-    folderPattern = f"Results_without_linker_ves_sizes{ves_sizes}_eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_n_vesicles{num['vesicle']}"
+    frac = ''
+    for i in ves_fraction.values():
+        frac+=str(i)
+        frac+='_'
+    syn_n = ''
+    for i in syn_per_ves.values():
+        syn_n += str(i)
+        syn_n += '_'
+    filePattern = f"without_linker_ves_sizes{ves_sizes}frac{frac}n{syn_n}eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_n_vesicles{num['vesicle']}"
+    folderPattern = f"Results_without_linker_ves_sizes{ves_sizes}n{syn_n}frac{frac}eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_n_vesicles{num['vesicle']}"
 
     if not os.path.exists(folderPattern):
         os.makedirs(folderPattern)

@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class make_linked_vesicles(object):
 
-    def __init__(self, num, eps, sigma, side, rigid, inter_range, attr_with_rep, newBonds, linker, angles_interactions):
+    def __init__(self, num, eps, sigma, side, rigid, inter_range, attr_with_rep, newBonds, linker, angles_interactions, ves_fraction, l_per_ves):
 
         self.rigid = rigid
 
@@ -18,6 +18,8 @@ class make_linked_vesicles(object):
         self.newBonds = newBonds
         self.linker = linker
         self.angles_interactions = angles_interactions
+        self.ves_fraction = ves_fraction
+        self.l_per_ves = l_per_ves
 
         # shows whether this type is in the system or not (yet)
         self.types = {'linker': False, 'synapsin': False}
@@ -101,8 +103,9 @@ class make_linked_vesicles(object):
 
         seed = 100
         np.random.seed(seed)
-        n = int(self.num['vesicle'] / len(self.sigma['vesicle']))
+
         for i in range(len(self.sigma['vesicle'])):
+            n = round( self.num['vesicle'] * self.ves_fraction[ 'vesicle_' + str(sigma['vesicle'][i]) ])
             self.start_inds['vesicle' + str(i + 1)] = np.random.choice(lattice_inds[lattice_mask_ves], size=n,
                                                                        replace=False)
             lattice_mask_ves[self.start_inds['vesicle' + str(i + 1)]] = False
@@ -183,7 +186,33 @@ class make_linked_vesicles(object):
                 "\t " + str(self.numAll) + " " + str(self.k) + " " + str(self.types[p_type]) + " " + str(
                     x) + " " + str(y) + " " + str(z) + " 0 0 0 \n")
 
+    def dist_on_circle(self, sigma, num):
+        cf = 2 * np.pi * sigma
+        max_num = np.floor(cf / self.sigma[linked])
+        if num >= max_num:
+            raise RuntimeError('Too many linkers on circumference, reduce number of linkers.')
+        linker_angle = 2.0 * np.pi / num
+        positions = np.zeros(shape=(num, 2))
+        for n in range(num):
+            angle_arg = n * linker_angle
+            positions[n, 0] = sigma * np.cos(angle_arg)
+            positions[n, 1] = sigmas[i] * np.sin(angle_arg)
+        return positions
+
     def make_linked_vesicles(self):
+
+        def dist_on_circle(sigma, num):
+            cf = 2 * np.pi * sigma
+            max_num = np.floor(cf / self.sigma[linked])
+            if num >= max_num:
+                raise RuntimeError('Too many linkers on circumference, reduce number of linkers.')
+            linker_angle = 2.0 * np.pi / num
+            positions = np.zeros(shape=(num, 2))
+            for n in range(num):
+                angle_arg = n * linker_angle
+                positions[n, 0] = sigma * np.cos(angle_arg)
+                positions[n, 1] = sigma * np.sin(angle_arg)
+            return positions
 
         for t in ['vesicle' + str(i + 1) for i in range(len(self.sigma['vesicle']))]:
             if not self.types[t]:
@@ -217,6 +246,8 @@ class make_linked_vesicles(object):
                         self.sigma['vesicle'][sigma_index] + self.sigma[linked]) + " \n")
                 # bond_type energy eq_distance
 
+            position_on_cirlce = dist_on_circle(self.sigma['vesicle'][sigma_index], self.l_per_ves['vesicle_' + str(self.sigma['vesicle'][sigma_index])])
+
             for i in range(len(self.start_inds['vesicle' + str(sigma_index + 1)])):  ## go through chains
                 indBuf = self.start_inds['vesicle' + str(sigma_index + 1)][i]  # index of lattice occupied by vesicle
 
@@ -229,7 +260,8 @@ class make_linked_vesicles(object):
                 z = self.lattice_sites[indBuf, 2]
 
                 bonded_num = 0
-                for n in range(5):
+
+                for n in range(self.l_per_ves['vesicle_' + str(self.sigma['vesicle'][sigma_index])]):
                     ## counter of all particles
                     self.numAll += 1
                     '''
@@ -243,10 +275,6 @@ class make_linked_vesicles(object):
                             z) + " 0 0 0 \n")
                         bonded_num = self.numAll
 
-                    radial_dist = self.sigma['vesicle'][sigma_index] + self.sigma[linked]
-
-                    position_on_cirlce = np.array(
-                        [[radial_dist, 0], [0, -radial_dist], [-radial_dist, 0], [0, radial_dist]])
 
                     if n > 0:
 
@@ -256,7 +284,7 @@ class make_linked_vesicles(object):
                                 str(x - position_on_cirlce[n - 1, 0]) + " " + str(y - position_on_cirlce[n - 1, 1]) + " " + str(z) + " 0 0 0 \n")
                         else:
                             self.coords.append(
-                                "\t " + str(self.numAll) + " " + str(self.k) + " " + str(self.types['synapsin' + str(self.k)]) + " " +
+                                "\t " + str(self.numAll) + " " + str(self.k) + " " + str(self.types['synapsin' + str(self.k-1)]) + " " +
                                 str(x - position_on_cirlce[n - 1, 0]) + " " + str(
                                     y - position_on_cirlce[n - 1, 1]) + " " + str(z) + " 0 0 0 \n")
                         # particle_number molecular_number type_number x y z 0 0 0
