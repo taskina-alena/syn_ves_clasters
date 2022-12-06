@@ -8,6 +8,8 @@ import input_func
 # TODO count the sizes of clusters
 # TODO make different numbers of linkers per vesicle
 # TODO create bonds
+# TODO introduce different fractions of vesiclesgit
+# TODO introduce different number of synapsin on vesicle
 
 if __name__ == "__main__":
 
@@ -19,27 +21,28 @@ if __name__ == "__main__":
     break_prob = 0
     intra_range = 0
 
-    rigid_molecules = True
+    rigid_molecules = False
     eps = {'attr': 6, 'rep': 1, 'bond': 1, 'angle': 100}
     inter_range = 0.25
-    newBonds = True
+    newBonds = False
+    linker = False
+    angles_interactions = False
     attr_with_rep = True
     side_box = 200
     num = {'vesicle':100, 'synapsin':4000, 'linker':400}
     #side_box = 600
     #num = {'vesicle':900, 'synapsin':36000, 'linker':3600}
-    sigma = {'vesicle': [3], 'linker': 0.5, 'synapsin': 0.5}
+    sigma = {'vesicle': [3, 4, 5], 'linker': 0.5, 'synapsin': 0.5}
 
-    system = make_linked_vesicles(num, eps, sigma, side_box, rigid_molecules, inter_range, attr_with_rep, newBonds)
-    system.make_single_particle('synapsin')
+    system = make_linked_vesicles(num, eps, sigma, side_box, rigid_molecules, inter_range, attr_with_rep, newBonds, linker, angles_interactions)
     system.make_linked_vesicles()
 
     ves_sizes = ''
     for i in range(len(sigma['vesicle'])):
         ves_sizes+=str(sigma['vesicle'][i])
         ves_sizes+='_'
-    filePattern = f"change_attr_ves_sizes{ves_sizes}_eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_angle{eps['angle']}_n_synapsin{num['synapsin']}_n_vesicles{num['vesicle']}_createProb{create_prob}_breakProb{break_prob}_bond{eps['bond']}"
-    folderPattern = f"Results_change_attr_ves_sizes{ves_sizes}_eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_angle{eps['angle']}_n_synapsin{num['synapsin']}_n_vesicles{num['vesicle']}_createProb{create_prob}_breakProb{break_prob}_bond{eps['bond']}"
+    filePattern = f"without_linker_ves_sizes{ves_sizes}_eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_n_vesicles{num['vesicle']}"
+    folderPattern = f"Results_without_linker_ves_sizes{ves_sizes}_eps_attr{eps['attr']}_eps_rep{eps['rep']}_range{inter_range}_attr_with_rep{attr_with_rep}_n_vesicles{num['vesicle']}"
 
     if not os.path.exists(folderPattern):
         os.makedirs(folderPattern)
@@ -71,6 +74,7 @@ if __name__ == "__main__":
     if not rigid_molecules:
         for item in system.bonds:
             f.write(item)
+    if angles_interactions:
         for item in system.angles:
             f.write(item)
 

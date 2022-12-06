@@ -7,7 +7,7 @@ def write_in_script(system, folderPattern, filePattern, configName, dump_step, r
 
     f.write("units lj\n")
     f.write("dimension 2\n")
-    f.write("atom_style full\n")
+    f.write("atom_style molecular\n")
     f.write("boundary p p p\n")
     f.write(f"read_data {configName} \n")
     f.write("neighbor               0.3 bin\n")
@@ -47,7 +47,7 @@ def write_in_script(system, folderPattern, filePattern, configName, dump_step, r
         ##======================================##
         \n''')
 
-    if not system.rigid:
+    if system.angles_interactions:
         f.write("angle_style harmonic \n")
         f.write(f"angle_coeff  1 {system.eps['angle']} 90\n")
 
@@ -83,7 +83,7 @@ def write_in_script(system, folderPattern, filePattern, configName, dump_step, r
 
     f.write(f"fix fLANG all langevin 1.0 1.0 1.0 {seed}\n") # temp_start temp_end damp
 
-    if system.bonds:
+    if system.newBonds:
         f.write(f"fix cr_bond all bond/create 10 {system.types['synapsin']} {system.types['linker']} {intra_range + system.sigma['linker'] + system.sigma['synapsin']} {system.bondTypes['linker-synapsin']} "
                 f"iparam 1 {system.types['synapsin_b']} jparam 1 {system.types['linker']} prob {create_prob} {seed}\n")
 
