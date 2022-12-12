@@ -1,7 +1,7 @@
 def write_in_script(system, folderPattern, filePattern, configName, dump_step, run_steps, create_prob, break_prob, intra_range):
 
     seed = 100
-    filename = f"Input/Scripts/Input_{filePattern}.in"
+    filename = f"Input_span/Scripts/Input_{filePattern}.in"
 
     f = open(filename, "w")
 

@@ -188,7 +188,7 @@ class make_linked_vesicles(object):
 
     def dist_on_circle(self, sigma, num):
         cf = 2 * np.pi * sigma
-        max_num = np.floor(cf / self.sigma[linked])
+        max_num = np.floor(cf / (2*self.sigma[linked]))
         if num >= max_num:
             raise RuntimeError('Too many linkers on circumference, reduce number of linkers.')
         linker_angle = 2.0 * np.pi / num
@@ -261,7 +261,7 @@ class make_linked_vesicles(object):
 
                 bonded_num = 0
 
-                for n in range(self.l_per_ves['vesicle_' + str(self.sigma['vesicle'][sigma_index])]):
+                for n in range(self.l_per_ves['vesicle_' + str(self.sigma['vesicle'][sigma_index])]+1):
                     ## counter of all particles
                     self.numAll += 1
                     '''
