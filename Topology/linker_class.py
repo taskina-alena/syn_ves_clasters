@@ -86,7 +86,7 @@ class make_linked_vesicles(object):
         lattice_mask = np.ones(len(lattice_inds), bool)
         lattice_mask_ves = np.zeros(len(lattice_inds), bool)
 
-        vesicle_size = (max(self.sigma['vesicle']) + 2 * self.sigma['linker']) / self.lattice_constant
+        vesicle_size = (self.lj_factor*(max(self.sigma['vesicle']) + 2 * self.sigma['linker'])) / self.lattice_constant
         vesicle_step = round(vesicle_size + 0.5) * 2
         num_x_vesicles = self.num_x // vesicle_step
         num_y_vesicles = self.num_y // vesicle_step
@@ -96,12 +96,12 @@ class make_linked_vesicles(object):
         # shift_y = ((self.num_y -1) % vesicle_step) // 2 + 1
         for i in range(num_y_vesicles):
             for j in range(num_x_vesicles):
-                lattice_mask_ves[(int((vesicle_step / 2 + i * vesicle_step) * self.num_x + (
-                            vesicle_step / 2 + j * vesicle_step)))] = True
+                lattice_mask_ves[(int((vesicle_step/2 + i * vesicle_step) * self.num_x + (
+                            vesicle_step/2 + j * vesicle_step)))] = True
 
         assert (sum(lattice_mask_ves) >= self.num['vesicle'])
 
-        seed = 100
+        seed = 1
         np.random.seed(seed)
 
         for i in range(len(self.sigma['vesicle'])):
@@ -243,10 +243,10 @@ class make_linked_vesicles(object):
                 self.bondTypes['vesicle' + str(sigma_index + 1) + '-' + linked] = self.numBondTypes
                 self.bond_coeff.append(
                     "\t bond_coeff " + str(self.numBondTypes) + " " + str(self.eps['bond']) + " " + str(
-                        self.sigma['vesicle'][sigma_index] + self.sigma[linked]) + " \n")
+                        self.lj_factor*(self.sigma['vesicle'][sigma_index] + self.sigma[linked])) + " \n")
                 # bond_type energy eq_distance
 
-            position_on_cirlce = dist_on_circle(self.sigma['vesicle'][sigma_index], self.l_per_ves['vesicle_' + str(self.sigma['vesicle'][sigma_index])])
+            position_on_cirlce = dist_on_circle(self.lj_factor*(self.sigma['vesicle'][sigma_index]+self.sigma[linked]), self.l_per_ves['vesicle_' + str(self.sigma['vesicle'][sigma_index])])
 
             for i in range(len(self.start_inds['vesicle' + str(sigma_index + 1)])):  ## go through chains
                 indBuf = self.start_inds['vesicle' + str(sigma_index + 1)][i]  # index of lattice occupied by vesicle

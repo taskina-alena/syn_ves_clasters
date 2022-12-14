@@ -1,4 +1,4 @@
-def write_in_script(system, folderPattern, filePattern, configName, dump_step, run_steps, create_prob, break_prob, intra_range):
+def write_in_script(system, folderPattern, filePattern, configName, dump_step, run_steps, create_prob, break_prob, intra_range, timestep):
 
     seed = 100
     filename = f"Input_span/Scripts/Input_{filePattern}.in"
@@ -124,6 +124,7 @@ def write_in_script(system, folderPattern, filePattern, configName, dump_step, r
 
     f.write("fix enforce_2d all enforce2d\n")
     f.write(f"dump 2 all custom {dump_step} {folderPattern}/Movie_{filePattern}.xyz id type mol x y z \n")
+    f.write(f"timestep {timestep}\n")
     f.write("run %i\n"%run_steps)
     f.close()
 

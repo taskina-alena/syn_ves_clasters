@@ -38,7 +38,7 @@ class vesicle_analysis(object):
         box = fr.box.Box(box_lens[0], box_lens[1], is2D=True)  # define the box that the freud package can use
         # box.periodic_z = False
 
-        frames_to_process = [-10, -9, -8, -7, -6, -5, -4, -3, -2, -1]
+        frames_to_process = np.arange(len(work_movie))
 
         oligo_dist_time = np.zeros(shape=(len(frames_to_process), max_k_mer + 2))
 
@@ -94,8 +94,8 @@ class vesicle_analysis(object):
 
 
 if __name__ == '__main__':
-    for eps_attr in range(1, 7):
-        for d in range(6):
+    for eps_attr in [9]:
+        for d in [9]:
             density = np.round(0.08 + d * 0.1, 2)
             file_pattern = f"without_linker_ves_sizes3_4_5_density{density}_frac0.25_0.5_0.25_eps_attr{eps_attr}_eps_rep1_range0.25_attr_with_repTrue_n_vesicles100"
             movie_pattern = f"without_linker_ves_sizes3_4_5_frac0.25_0.5_0.25_density{density}_eps_attr{eps_attr}_eps_rep1_range0.25_attr_with_repTrue_n_vesicles100"

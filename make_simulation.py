@@ -7,20 +7,21 @@ import input_func
 # TODO introduce clastering of synapsin before vesicles
 
 # TODO introduce sampling of vesicle size from the gaussian
-# TODO draw heatmap how cluster size depends on epsilon and Nlinkers
 
-for eps_attr in range(1, 11):
+for eps_attr in range(1,11):
     for d in range(10):
-        sim_seed = 5
+        sim_seed = 1
         dump_step = 1000
         eq_steps = 1e3
         run_steps = 1e6
+        timestep = 0.004
+
         create_prob = 1
         break_prob = 0
         intra_range = 0
 
         rigid_molecules = False
-        eps = {'attr': eps_attr, 'rep': 1, 'bond': 1, 'angle': 100}
+        eps = {'attr': eps_attr, 'rep': 1, 'bond': 100, 'angle': 100}
         inter_range = 0.25
         newBonds = False
         linker = False
@@ -94,7 +95,7 @@ for eps_attr in range(1, 11):
 
         f.close()
 
-        input_func.write_in_script(system, folderPattern, filePattern, configName, dump_step, run_steps, create_prob, break_prob, intra_range)
+        input_func.write_in_script(system, folderPattern, filePattern, configName, dump_step, run_steps, create_prob, break_prob, intra_range, timestep)
 
 
 
